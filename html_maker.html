@@ -1,0 +1,536 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>HTML 생성기</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                     Roboto, "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+        background: #f4f5f7;
+        color: #222;
+    }
+    #left {
+        width: 38%;
+        min-width: 340px;
+        padding: 20px 24px;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        background: #fff;
+    }
+    #right {
+        width: 62%;
+        padding: 20px;
+        overflow-y: auto;
+        text-align: center;
+        position: relative;
+    }
+    h2 {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+    label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #444;
+    }
+    input[type="text"] {
+        width: 100%;
+        padding: 6px 8px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 13px;
+    }
+    textarea {
+        width: 100%;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                     "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+    }
+    button {
+        background: #2d6cf6;
+        color: white;
+        border: none;
+        padding: 7px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    button:hover {
+        background: #1f53c3;
+    }
+    button.secondary {
+        background: #e1e4ea;
+        color: #222;
+    }
+    button.secondary:hover {
+        background: #cfd4df;
+    }
+    button.success {
+        background: #28a745;
+    }
+    button.success:hover {
+        background: #1f8537;
+    }
+    .imgAddBtn {
+        background: #2d6cf6;
+        padding: 6px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+    .imgAddBtn:hover {
+        background: #1f53c3;
+    }
+    .img-block {
+        border: 1px solid #ddd;
+        padding: 10px 10px 12px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        background: #fafafa;
+    }
+    .img-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .coords-box {
+        margin-top: 6px;
+        padding: 8px;
+        background: #fff;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        font-size: 12px;
+    }
+    .coords-row {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        margin-top: 4px;
+        flex-wrap: wrap;
+    }
+    .coords-row label {
+        margin-bottom: 0;
+        font-size: 12px;
+        color: #555;
+    }
+    .coords-row input {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        margin-bottom: 0;
+    }
+    .small-text {
+        font-size: 11px;
+        color: #777;
+        margin-top: 2px;
+    }
+    #previewWrapper {
+        display: inline-block;
+        position: relative;
+        margin-top: 10px;
+    }
+    #previewImg {
+        max-width: 650px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        display: none;
+    }
+    #previewPlaceholder {
+        margin-top: 40px;
+        font-size: 13px;
+        color: #888;
+    }
+    #selectionBox {
+        position: absolute;
+        border: 2px dashed #ff4747;
+        pointer-events: none;
+        display: none;
+        background: rgba(255,0,0,0.12);
+    }
+    #output {
+        height: 200px;
+        border-radius: 6px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        resize: vertical;
+    }
+    .btn-row {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+</style>
+</head>
+<body>
+<div id="left">
+    <h2>초대장 HTML 자동 생성기</h2>
+
+    <label><b>타이틀</b></label>
+    <input id="titleInput" type="text" placeholder="예: 한미그룹_임원교" />
+
+    <div style="margin:10px 0 6px; font-size:12px; color:#666;">
+        1) 이미지 URL 입력 → 2) (선택) 미리보기 선택 → 3) 드래그로 영역 지정
+    </div>
+
+    <div id="imgContainer"></div>
+
+    <button
+        type="button"
+        id="addImgBtn"
+        class="imgAddBtn"
+        style="width:100%;margin-top:4px;"
+        onclick="addImageBlock()"
+    >
+      + 이미지 추가
+    </button>
+
+    <h3 style="margin-top:18px;">HTML 코드 결과</h3>
+    <textarea id="output"></textarea>
+
+    <div class="btn-row">
+        <button type="button" onclick="generateHTML()">HTML 코드 생성</button>
+        <button type="button" class="success" onclick="downloadFile()">HTML 파일로 저장하기</button>
+    </div>
+</div>
+
+<div id="right">
+    <h3>이미지 미리보기 & 드래그로 영역 선택</h3>
+    <div class="small-text">이미지 위를 드래그하면 해당 좌표로 area가 추가됩니다.</div>
+
+    <div id="previewWrapper">
+        <img id="previewImg" alt="미리보기" draggable="false" />
+        <div id="selectionBox"></div>
+    </div>
+
+    <div id="previewPlaceholder">
+        왼쪽에서 이미지 URL을 입력하면 이곳에 미리보기가 표시됩니다.
+    </div>
+</div>
+
+<script>
+let imgCount = 0;
+let activeIndex = null;
+
+// 드래그 관련
+let isDragging = false;
+let startX = 0, startY = 0;
+let scale = 1;
+let imgRect = null;
+
+// ---------- 이미지 블록 관련 ----------
+
+// 페이지 로드시 기본 1개 생성
+window.addEventListener('DOMContentLoaded', () => {
+    addImageBlock();
+});
+
+// 이미지 블록 추가
+function addImageBlock() {
+    imgCount++;
+    const index = imgCount;
+
+    const div = document.createElement('div');
+    div.className = 'img-block';
+    div.id = `imgBlock_${index}`;
+
+    div.innerHTML = `
+        <div class="img-header">
+            <span>이미지 ${index}</span>
+            <button type="button" class="secondary" onclick="setActiveImage(${index})">미리보기 선택</button>
+        </div>
+        <label>이미지 URL</label>
+        <input type="text" placeholder="https://..."
+               oninput="handleImageUrlInput(${index}, this.value)" />
+        <label style="margin-top:4px;">
+            <input id="mapChk_${index}" type="checkbox" checked
+                   onchange="toggleMap(${index}, this.checked)" />
+            이미지맵 사용 (클릭 가능한 영역 만들기)
+        </label>
+        <div class="small-text">기본으로 링크 영역 1개가 생성되어 있습니다.</div>
+        <div id="coordsArea_${index}"></div>
+        <button type="button" class="secondary" style="margin-top:6px;" onclick="addAreaRow(${index})">
+            + 링크 영역 추가
+        </button>
+    `;
+
+    document.getElementById('imgContainer').appendChild(div);
+
+    // 기본 링크 영역 1개 생성
+    toggleMap(index, true);
+
+    // 첫 번째 이미지 블록은 자동으로 active 처리
+    if (imgCount === 1) {
+        activeIndex = 1;
+    }
+}
+
+// URL 입력 시: 해당 이미지를 active로 설정하고 미리보기 로드
+function handleImageUrlInput(index, url) {
+    if (!url) return;
+    activeIndex = index;
+    loadPreview(url);
+}
+
+// 사용자가 “미리보기 선택” 버튼 눌렀을 때
+function setActiveImage(index) {
+    activeIndex = index;
+    const block = document.getElementById(`imgBlock_${index}`);
+    if (!block) return;
+    const urlInput = block.querySelector('input[type="text"]');
+    if (urlInput && urlInput.value.trim()) {
+        loadPreview(urlInput.value.trim());
+    }
+}
+
+// 이미지맵 사용 체크 시: 기본 링크 입력 칸 생성/제거
+function toggleMap(index, use) {
+    const areaDiv = document.getElementById(`coordsArea_${index}`);
+    if (!areaDiv) return;
+    areaDiv.innerHTML = '';
+
+    if (use) {
+        addAreaRow(index); // 기본 1개 생성
+    }
+}
+
+// 사용자가 수동으로 + 버튼 누를 때
+function addAreaRow(index) {
+    const block = document.getElementById(`imgBlock_${index}`);
+    if (!block) return;
+
+    const chk = document.getElementById(`mapChk_${index}`);
+    if (chk && !chk.checked) {
+        chk.checked = true;
+    }
+
+    const areaDiv = document.getElementById(`coordsArea_${index}`);
+    const box = document.createElement('div');
+    box.className = 'coords-box';
+    box.innerHTML = `
+        <div class="coords-row">
+            <label>coords</label>
+            <input type="text" placeholder="x1,y1,x2,y2 (드래그 또는 직접 입력)" />
+        </div>
+        <div class="coords-row">
+            <label>링크</label>
+            <input type="text" placeholder="https://..." />
+        </div>
+    `;
+    areaDiv.appendChild(box);
+}
+
+// ---------- 미리보기 / 드래그 ----------
+
+function loadPreview(url) {
+    const img = document.getElementById('previewImg');
+    const placeholder = document.getElementById('previewPlaceholder');
+    img.style.display = 'none';
+    placeholder.style.display = 'block';
+
+    img.onload = () => {
+        imgRect = img.getBoundingClientRect();
+        scale = img.naturalWidth / imgRect.width;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    };
+    img.onerror = () => {
+        alert('이미지를 불러오지 못했습니다. URL을 확인해주세요.');
+    };
+    img.src = url;
+}
+
+// 이미지 자체 드래그 방지
+document.getElementById('previewImg').addEventListener('dragstart', (e) => {
+    e.preventDefault();
+});
+
+// 드래그 시작
+document.getElementById('previewImg').addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // 왼쪽 버튼만
+    if (!activeIndex) return;
+
+    e.preventDefault(); // 이미지 기본 드래그 방지
+
+    const img = document.getElementById('previewImg');
+    imgRect = img.getBoundingClientRect();
+    scale = img.naturalWidth / imgRect.width;
+
+    isDragging = true;
+    startX = e.clientX - imgRect.left;
+    startY = e.clientY - imgRect.top;
+
+    const box = document.getElementById('selectionBox');
+    box.style.left = startX + 'px';
+    box.style.top = startY + 'px';
+    box.style.width = '0px';
+    box.style.height = '0px';
+    box.style.display = 'block';
+});
+
+// 드래그 중
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging || !imgRect) return;
+
+    const curX = e.clientX - imgRect.left;
+    const curY = e.clientY - imgRect.top;
+
+    const box = document.getElementById('selectionBox');
+
+    const x1 = Math.min(startX, curX);
+    const y1 = Math.min(startY, curY);
+    const w  = Math.abs(curX - startX);
+    const h  = Math.abs(curY - startY);
+
+    box.style.left   = x1 + 'px';
+    box.style.top    = y1 + 'px';
+    box.style.width  = w  + 'px';
+    box.style.height = h  + 'px';
+});
+
+// 드래그 끝
+document.addEventListener('mouseup', (e) => {
+    if (!isDragging || !imgRect) return;
+    isDragging = false;
+
+    const curX = e.clientX - imgRect.left;
+    const curY = e.clientY - imgRect.top;
+
+    const x1 = Math.min(startX, curX);
+    const y1 = Math.min(startY, curY);
+    const x2 = Math.max(startX, curX);
+    const y2 = Math.max(startY, curY);
+
+    const realX1 = Math.round(x1 * scale);
+    const realY1 = Math.round(y1 * scale);
+    const realX2 = Math.round(x2 * scale);
+    const realY2 = Math.round(y2 * scale);
+
+    document.getElementById('selectionBox').style.display = 'none';
+
+    if (!activeIndex) return;
+    const index = activeIndex;
+    const areaDiv = document.getElementById(`coordsArea_${index}`);
+    if (!areaDiv) return;
+
+    const coordsText = `${realX1},${realY1},${realX2},${realY2}`;
+
+    // 가장 마지막 coords input에 채워주기 (없으면 새로 만들기)
+    let lastBox = areaDiv.querySelector('.coords-box:last-of-type');
+    if (!lastBox) {
+        addAreaRow(index);
+        lastBox = areaDiv.querySelector('.coords-box:last-of-type');
+    }
+    const coordsInput = lastBox.querySelector('.coords-row input[type="text"]');
+    if (coordsInput) {
+        coordsInput.value = coordsText;
+    }
+});
+
+// ---------- HTML 생성 & 다운로드 ----------
+
+function generateHTML() {
+    const title = document.getElementById('titleInput').value.trim();
+    let tableRows = '';
+    let maps = '';
+    let mapIndex = 1;
+
+    for (let i = 1; i <= imgCount; i++) {
+        const block = document.getElementById(`imgBlock_${i}`);
+        if (!block) continue;
+
+        const urlInput = block.querySelector('input[type="text"]');
+        const url = urlInput ? urlInput.value.trim() : '';
+        if (!url) continue;
+
+        const mapChk = document.getElementById(`mapChk_${i}`);
+        const useMap = mapChk && mapChk.checked;
+
+        const mapName = `Map${mapIndex}`;
+
+        let row = `<tr>
+    <td width="900" valign="top" style="margin:0;padding:0;font-size:0;">
+      <img src="${url}" alt="" style="border:0;margin:0;padding:0;font-size:0;"`;
+
+        if (useMap) {
+            row += ` usemap="#${mapName}"`;
+        }
+
+        row += ` />
+    </td>
+  </tr>
+`;
+        tableRows += row;
+
+        if (useMap) {
+            const areas = block.querySelectorAll('.coords-box');
+            let areaTags = '';
+            areas.forEach((box) => {
+                const inputs = box.querySelectorAll('.coords-row input[type="text"]');
+                if (inputs.length < 2) return;
+                const coords = inputs[0].value.trim();
+                const link = inputs[1].value.trim();
+                if (!coords || !link) return;
+                areaTags += `  <area shape="rect" coords="${coords}" href="${link}" target="_blank" />\n`;
+            });
+
+            if (areaTags) {
+                maps += `<map name="${mapName}">
+${areaTags}</map>
+
+`;
+            }
+            mapIndex++;
+        }
+    }
+
+    const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${title}</title>
+</head>
+<body>
+<div style="max-width:900px;margin:0 auto;width:100%;">
+<table width="900" border="0" cellspacing="0" cellpadding="0">
+${tableRows}</table>
+${maps}</div>
+</body>
+</html>`;
+
+    document.getElementById('output').value = html;
+}
+
+function downloadFile() {
+    // 항상 최신 코드 기준으로 저장
+    generateHTML();
+
+    const title = document.getElementById('titleInput').value.trim() || 'invitation';
+    const safeName = title.replace(/[^0-9a-zA-Z가-힣-_]/g, '_') + '.html';
+    const content = document.getElementById('output').value;
+
+    const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
